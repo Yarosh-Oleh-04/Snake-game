@@ -97,11 +97,11 @@ map = []
 
 game = tkinter.Tk()
 game.title('Snake')
-game.geometry('480x650')
+game.geometry('450x610')
 game.resizable(0, 0)
 
 for i in range(225):
-    map += [tkinter.Label(game, bg='green', height=2, width=4, borderwidth=1, relief='groove')]
+    map += [tkinter.Label(game, bg='green', height=2, width=4, borderwidth=0, relief='groove')]
     map[i].grid(row=i // 15, column=i % 15)
 
 
@@ -112,16 +112,16 @@ start_button.grid(row=16, column=0, columnspan=3, rowspan=3)
 score_button = tkinter.Button(game, bg='gray', text='Score:')
 score_button.grid(row=16, column=11, columnspan=3, rowspan=3)
 
-go_left = tkinter.Button(game, bg='gray', width=3, text='⮜', command=lambda: go_to('left'))
+go_left = tkinter.Button(game, bg='gray', width=3, text='⮜', borderwidth=1, command=lambda: go_to('left'))
 go_left.grid(row=17, column=6)
-go_right = tkinter.Button(game, bg='gray', width=3, text='⮞', command=lambda: go_to('right'))
+go_right = tkinter.Button(game, bg='gray', width=3, text='⮞', borderwidth=1, command=lambda: go_to('right'))
 go_right.grid(row=17, column=8)
-go_up = tkinter.Button(game, bg='gray', width=3, text='⮝', command=lambda: go_to('up'))
+go_up = tkinter.Button(game, bg='gray', width=3, text='⮝', borderwidth=1, command=lambda: go_to('up'))
 go_up.grid(row=16, column=7)
-go_down = tkinter.Button(game, bg='gray', width=3, text='⮟', command=lambda: go_to('down'))
+go_down = tkinter.Button(game, bg='gray', width=3, text='⮟', borderwidth=1, command=lambda: go_to('down'))
 go_down.grid(row=18, column=7)
 
-stop = tkinter.Button(game, bg='gray', width=3, text='◯', command=pause)
+stop = tkinter.Button(game, bg='gray', width=3, text='◯', borderwidth=1, command=pause)
 stop.grid(row=17, column=7)
 
 map[snake['y'] * 15 + snake['x']]['bg'] = 'black'
