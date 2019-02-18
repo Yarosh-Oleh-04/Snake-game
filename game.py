@@ -7,11 +7,11 @@ from typing import Any
 
 
 def run_game(tail=[]):
-    time.sleep(1 - snake['l'] / 100)
-    while start_button['text'] == 'New game!' or stop['text'] == '⬤':
+    time.sleep(0.5 - snake['l'] / 500)
+    while snake['way'] == '' or stop['text'] == '⬤':
         pass
-    side, tail = go_to(1, tail)
-    xyz = snake_side(side)
+    tail = go_to(1, tail)
+    xyz = snake_side()
     tail = edit_tail(tail)
     snake['y'] = (snake['y'] + xyz[1]) % 15
     snake['x'] = (snake['x'] + xyz[0]) % 15
@@ -24,7 +24,7 @@ def run_game(tail=[]):
 def go_to(value, tail=None):
     if value == 1:
         if snake['l'] > len(tail):
-            xyz = snake_side(start_button['command'])
+            xyz = snake_side()
             tail += [dict(x=snake['x'] - xyz[0], y=snake['y'] - xyz[1])]
         map[snake['y'] * 15 + snake['x']]['bg'] = 'green'
         for coordinate in tail:
@@ -34,26 +34,25 @@ def go_to(value, tail=None):
         if map[snake['y'] * 15 + snake['x']]['bg'] == 'red':
             snake['l'] += 1
             snake['food'] = False
-            throw_food(tail)
-            s, tail = go_to(1, tail)
         map[snake['y'] * 15 + snake['x']]['bg'] = 'black'
         for coordinate in tail:
             map[(coordinate['y'] * 15 + coordinate['x'])]['bg'] = 'black'
+        throw_food()
 
     if value != 1 and value != 0:
-        start_button['command'] = value
+        snake['way'] = value
 
-    return [start_button['command'], tail]
+    return tail
 
 
-def snake_side(side):
-    if side == 'left':
+def snake_side():
+    if snake['way'] == 'left':
         return [-1, 0]
-    elif side == 'right':
+    elif snake['way'] == 'right':
         return [1, 0]
-    elif side == 'up':
+    elif snake['way'] == 'up':
         return [0, -1]
-    elif side == 'down':
+    elif snake['way'] == 'down':
         return [0, 1]
 
 
@@ -64,18 +63,16 @@ def pause():
         stop['text'] = '◯'
 
 
-def throw_food(tail):
-    x = snake['x']
-    y = snake['y']
+def throw_food():
     if not snake['food']:
-        while x == snake['x'] and y == snake['y']:
-            x = random.randint(0, 14)
-            y = random.randint(0, 14)
+        coords = []
+        for i in range(len(map)):
+            if map[i]['bg'] == 'green':
+                coords += [str(i // 15) + ' ' + str(i % 15)]
+        x, y = coords[random.randint(0, len(coords) - 1)].split(' ')
+        x, y = int(x), int(y)
         map[y * 15 + x]['bg'] = 'red'
-        snake['food'] = 'true'
-        for i in tail:
-            if i['x'] == x or i['y'] == y:
-                throw_food(tail)
+        snake['food'] = True
 
 
 def edit_tail(tail):
@@ -87,12 +84,12 @@ def edit_tail(tail):
 
 
 def game_start():
-    start_button['text'] = 'Started!'
-    start_button['command'] = 'left'
+    snake['way'] = 'left'
+    throw_food()
 
 
 global snake
-snake = dict(x=7, y=7, l=0, food=False)
+snake = dict(x=7, y=7, l=0, food=False, way='')
 map = []
 
 game = tkinter.Tk()
@@ -125,7 +122,6 @@ stop = tkinter.Button(game, bg='gray', width=3, text='◯', borderwidth=1, comma
 stop.grid(row=17, column=7)
 
 map[snake['y'] * 15 + snake['x']]['bg'] = 'black'
-throw_food([])
 threading.Thread(target=run_game).start()
 
 game.mainloop()
