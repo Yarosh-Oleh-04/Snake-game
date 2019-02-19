@@ -8,14 +8,22 @@ from typing import Any
 
 def run_game(tail=[]):
     time.sleep(0.5 - snake['l'] / 500)
-    while snake['way'] == '' or stop['text'] == '⬤':
+    while snake['status'] == 'sleeping' or stop['text'] == '⬤':
         pass
+    if not snake['game']:
+        snake['game'] = True
+        run_game([])
     tail = go_to(1, tail)
     xyz = snake_side()
     tail = edit_tail(tail)
     snake['y'] = (snake['y'] + xyz[1]) % 15
     snake['x'] = (snake['x'] + xyz[0]) % 15
-
+    end_game()
+    if snake['status'] == 'dead':
+        snake['status'] = 'sleeping'
+        while snake['status'] == 'sleeping':
+            pass
+        run_game([])
     go_to(0, tail)
     score_button['text'] = 'Score: ' + str(snake['l'])
     run_game(tail)
@@ -26,14 +34,16 @@ def go_to(value, tail=None):
         if snake['l'] > len(tail):
             xyz = snake_side()
             tail += [dict(x=snake['x'] - xyz[0], y=snake['y'] - xyz[1])]
-        map[snake['y'] * 15 + snake['x']]['bg'] = 'green'
-        for coordinate in tail:
-            map[(coordinate['y'] * 15 + coordinate['x'])]['bg'] = 'green'
+        if not tail:
+            map[snake['y'] * 15 + snake['x']]['bg'] = 'green'
+        else:
+            map[tail[len(tail) - 1]['y'] * 15 + tail[len(tail) - 1]['x']]['bg'] = 'green'
 
     if value == 0:
         if map[snake['y'] * 15 + snake['x']]['bg'] == 'red':
             snake['l'] += 1
             snake['food'] = False
+            tail = go_to(1, tail)
         map[snake['y'] * 15 + snake['x']]['bg'] = 'black'
         for coordinate in tail:
             map[(coordinate['y'] * 15 + coordinate['x'])]['bg'] = 'black'
@@ -43,6 +53,11 @@ def go_to(value, tail=None):
         snake['way'] = value
 
     return tail
+
+
+def end_game():
+    if map[snake['y'] * 15 + snake['x']]['bg'] == 'black':
+        snake['status'] = 'dead'
 
 
 def snake_side():
@@ -84,12 +99,20 @@ def edit_tail(tail):
 
 
 def game_start():
-    snake['way'] = 'left'
+    update_map()
     throw_food()
 
 
+def update_map():
+    for label in map:
+        label['bg'] = 'green'
+    global snake
+    snake = dict(x=7, y=7, l=0, food=False, way='left', status='live', game=False)
+    map[snake['y'] * 15 + snake['x']]['bg'] = 'black'
+
+
 global snake
-snake = dict(x=7, y=7, l=0, food=False, way='')
+snake = dict(x=7, y=7, l=0, food=False, way='left', status='sleeping', game=False)
 map = []
 
 game = tkinter.Tk()
