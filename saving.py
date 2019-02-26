@@ -1,6 +1,6 @@
 def save(snake, tail):
     data = []
-    data += open('data.txt').read().split('\n')[0]
+    data += [open('data.txt').read().split('\n')[0]]
     data += [str(snake['x'])]
     data += [str(snake['y'])]
     data += [str(snake['l'])]
@@ -8,29 +8,17 @@ def save(snake, tail):
     data += [str(snake['status'])]
     data += [str(snake['game'])]
     data += [str(snake['task'])]
-    t = ''
+    t = []
     for i in tail:
-        t += str(i['x']) + ' ' + str(i['y']) + '|'
-    data += [t]
+        t += [str(i['x']) + ' ' + str(i['y'])]
+    data += ['|'.join(t)]
     open('data.txt', 'w').write('\n'.join(data))
 
 
 def update():
     data = open('data.txt').read().split('\n')
-    snake = dict(x=None, y=None, l=None, way=None, status=None, game=None, task=None)
-    tail = []
-    snake['x'] = int(data[1])
-    snake['y'] = int(data[2])
-    snake['l'] = int(data[3])
-    snake['way'] = data[4]
-    snake['status'] = data[5]
-    snake['game'] = data[6]
-    snake['task'] = data[7]
-    if len(tail) > 0:
-        for t in data[8].split('|'):
-            t = t.split(' ')
-            tail += [dict(x=int(t[0]), y=int(t[1]))]
-    return snake, tail
+    snake = data
+    return snake, data[8]
 
 
 

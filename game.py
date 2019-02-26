@@ -8,26 +8,28 @@ from typing import Any, Dict, Union
 
 
 def run_game(tail=[]):
-    time.sleep(0.1 - snake['l'] / 2250)
-    last_data(snake, tail)
-    while snake['status'] == 'sleeping' or stop['text'] == '⬤':
-        pass
-    if snake['game'] == 'false':
-        snake['game'] = 'true'
-        run_game([])
-    tail = go_to(1, tail)
-    xyz = snake_side()
-    tail = edit_tail(tail)
-    snake['y'] = (snake['y'] + xyz[1]) % 15
-    snake['x'] = (snake['x'] + xyz[0]) % 15
-    end_game()
-    if snake['status'] == 'dead':
-        snake['status'] = 'sleeping'
-        while snake['status'] == 'sleeping':
+    while True:
+        time.sleep(0.1 - snake['l'] / 2250)
+        tail = last_data(tail)
+        while snake['status'] == 'sleeping' or stop['text'] == '⬤':
+            tail = last_data(tail)
             pass
-        run_game([])
-    go_to(0, tail)
-    run_game(tail)
+        if snake['game'] == 'false':
+            snake['game'] = 'true'
+            run_game([])
+        tail = go_to(1, tail)
+        xyz = snake_side()
+        tail = edit_tail(tail)
+        snake['y'] = (snake['y'] + xyz[1]) % 15
+        snake['x'] = (snake['x'] + xyz[0]) % 15
+        end_game()
+        if snake['status'] == 'dead':
+            tail = last_data(tail)
+            snake['status'] = 'sleeping'
+            while snake['status'] == 'sleeping':
+                pass
+            run_game([])
+        go_to(0, tail)
 
 
 def go_to(value, tail=None):
@@ -54,7 +56,16 @@ def go_to(value, tail=None):
             throw_food()
 
     if value != 1 and value != 0:
-        snake['way'] = value
+        if snake['way'] == 'up' and value == 'down':
+            pass
+        elif snake['way'] == 'down' and value == 'up':
+            pass
+        elif snake['way'] == 'left' and value == 'right':
+            pass
+        elif snake['way'] == 'right' and value == 'left':
+            pass
+        else:
+            snake['way'] = value
 
     return tail
 
@@ -116,28 +127,36 @@ def update_map():
     map[snake['y'] * 15 + snake['x']]['bg'] = 'black'
 
 
-def last_data(csr, tail):
-    if csr['task'] == 0:
+def last_data(tail):
+    if snake['task'] == 0:
         snake['task'] = None
         saving.save(snake, tail)
-    if csr['task'] == 1:
+    if snake['task'] == 1:
         snake['task'] = None
-        csr, tail = saving.update()
+        csr, l = saving.update()
+        if len(l) > 0:
+            tail = []
+            for t in l.split('|'):
+                t = t.split(' ')
+                tail += [dict(x=int(t[0]), y=int(t[1]))]
+        snake['x'] = int(csr[1])
+        snake['y'] = int(csr[2])
+        snake['l'] = int(csr[3])
+        snake['way'] = csr[4]
+        snake['status'] = csr[5]
+        snake['game'] = csr[6]
+        stop['text'] = '⬤'
         for label in map:
             label['bg'] = 'green'
-        map[csr['y'] * 15 + csr['x']] = 'black'
+        map[snake['y'] * 15 + snake['x']]['bg'] = 'black'
         for i in tail:
-            map[i['y'] * 15 + i['x']] = 'black'
-    if csr['task'] == 2:
+            map[i['y'] * 15 + i['x']]['bg'] = 'black'
+        throw_food()
+    if snake['task'] == 2:
         snake['task'] = None
         saving.nullify_score()
 
-    snake['x'] = csr['x']
-    snake['y'] = csr['y']
-    snake['l'] = csr['l']
-    snake['way'] = csr['way']
-    snake['status'] = csr['status']
-    snake['game'] = csr['game']
+    return tail
 
 
 def expection(value):
@@ -186,6 +205,7 @@ game.bind('<Key-Left>', lambda e: go_to('left'))
 game.bind('<Key-Right>', lambda e: go_to('right'))
 game.bind('<Key-Up>', lambda e: go_to('up'))
 game.bind('<Key-Down>', lambda e: go_to('down'))
+game.bind('<space>', lambda e: pause())
 
 
 stop = tkinter.Button(game, bg='gray', width=3, text='◯', borderwidth=1, command=pause)
