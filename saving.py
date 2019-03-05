@@ -1,26 +1,29 @@
-def save(snake, tail):
+def save(brain):
     data = []
     data += [open('data.txt').read().split('\n')[0]]
-    data += [str(snake['x'])]
-    data += [str(snake['y'])]
-    data += [str(snake['l'])]
-    data += [str(snake['way'])]
-    data += [str(snake['status'])]
-    data += [str(snake['game'])]
-    data += [str(snake['task'])]
+    data += [str(brain['x']) + ' ' + str(brain['y'])]
+    data += [brain['way']]
+    data += [str(brain['food'][0]['x']) + ' ' + str(brain['food'][0]['y'])]
     t = []
-    for i in tail:
-        t += [str(i['x']) + ' ' + str(i['y'])]
+    for i in brain['tail']:
+        t += [str(i['x']) + ' ' + str(i['y']) + ' ' + i['way']]
     data += ['|'.join(t)]
     open('data.txt', 'w').write('\n'.join(data))
 
 
 def update():
     data = open('data.txt').read().split('\n')
-    snake = data
-    return snake, data[8]
-
-
+    x = int(data[1].split(' ')[0])
+    y = int(data[1].split(' ')[1])
+    l = len(data[4].split('|'))
+    way = data[2]
+    tail = []
+    for t in data[4].split('|'):
+        e = t.split(' ')
+        tail += [dict(tail=None, x=int(e[0]), y=int(e[1]), way=e[2])]
+    food = [dict(x=int(data[3].split(' ')[0]), y=int(data[3].split(' ')[1])), None]
+    brain = dict(x=x, y=y, l=l, snake=None, tail=tail, food=food, way=way, status='pause', task=None)
+    return brain
 
 
 def nullify():
