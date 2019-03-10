@@ -19,10 +19,18 @@ def run_game():
             return 0
         end_moving()
         new_tail()
-        edit_tail()
+        if brain['task'] == 0:
+            brain['task'] = None
+        else:
+            edit_tail()
         if end_game() == 'dead':
+            brain['status'] = 'dead'
             end_game_options()
         if brain['tail']:
+            if surprise['color'] == 'white':
+                if len(surprise['ornament']) > len(brain['tail']) - 2:
+                    surprise['ornament'][0].destroy()
+                    surprise['ornament'] = surprise['ornament'][1:]
             brain['tail'][0]['tail'].destroy()
             brain['tail'] = brain['tail'][1:]
         while brain['status'] == 'pause':
@@ -45,6 +53,61 @@ def go_to():
         brain['task'] = None
     brain['x'] += xyz[0]
     brain['y'] += xyz[1]
+
+
+def chance_surprise():
+    n = random.randint(0, len(surprise['chance']) - 1)
+    if surprise['chance'][n] == surprise['chance'][random.randint(0, len(surprise['chance']) - 1)]:
+        surprise['food'] = throw_food()
+        surprise['food'][1]['bg'] = 'white'
+        threading.Thread(target=rainbow_bridge).start()
+        surprise['chance'] = []
+        for i in range(1, 100):
+            surprise['chance'] += [i]
+        for tail in brain['tail']:
+            tail['tail']['bg'] = 'black'
+    else:
+        surprise['chance'] = surprise['chance'][1:]
+
+
+def rainbow_bridge():
+    threading.Thread(target=lambda: timer(10, 0)).start()
+    while surprise is not None:
+        rainbow(255, 255, 255, surprise['food'][1])
+
+
+def timer(seconds, value):
+    time.sleep(seconds)
+    expection(value, 0)
+
+
+def rainbow(r, g, b, element):
+    for n in range(255):
+        time.sleep(0.005)
+        to_rgb((r, g, b), element)
+        r -= 1
+    if surprise['food'] is None and element is not game_cell: return 0
+    for n in range(255):
+        time.sleep(0.005)
+        to_rgb((r, g, b), element)
+        r += 1
+        g -= 1
+    if surprise['food'] is None and element is not game_cell: return 0
+    for n in range(255):
+        time.sleep(0.005)
+        to_rgb((r, g, b), element)
+        g += 1
+        b -= 1
+    if surprise['food'] is None and element is not game_cell: return 0
+    for n in range(255):
+        time.sleep(0.005)
+        to_rgb((r, g, b), element)
+        b += 1
+    if surprise['food'] is None and element is not game_cell: return 0
+
+
+def to_rgb(rgb, element):
+    element['bg'] = "#%02x%02x%02x" % rgb
 
 
 def end_moving():
@@ -97,19 +160,24 @@ def throw_food():
         if n == 0:
             cords += [[x, y]]
     k = cords[random.randint(0, len(cords) - 1)]
-    food = tkinter.Frame(game_cell, bg='red', width=30, height=30)
+    food = tkinter.Frame(game_cell, bg='red', width=30, height=30, borderwidth=100)
     food.place(x=k[0], y=k[1])
-    brain['food'] = [dict(x=k[0], y=k[1]), food]
+    return [dict(x=k[0], y=k[1]), food]
 
 
 def new_tail():
     xyz = snake_side(brain['way'])
+    if surprise['food'] is not None:
+        if brain['x'] + xyz[0] == surprise['food'][0]['x'] / 30 and brain['y'] + xyz[1] == surprise['food'][0]['y'] / 30:
+            expection(0)
     if brain['x'] + xyz[0] == brain['food'][0]['x'] / 30 and brain['y'] + xyz[1] == brain['food'][0]['y'] / 30:
         score['text'] = 'Score: ' + '000'[len(str(brain['l'])):] + str(brain['l'])
+        chance['text'] = '❧ ' + str(0.16 * brain['l']) + '%'
         brain['l'] += 1
         brain['food'][1].destroy()
         edit_tail()
-        throw_food()
+        brain['task'] = None
+        brain['food'] = throw_food()
         for i in range(30):
             x = brain['x'] * 30
             y = brain['y'] * 30
@@ -117,6 +185,13 @@ def new_tail():
             brain['snake'].place(x=x + xyz[0] * i, y=y + xyz[1] * i)
         brain['x'] += xyz[0]
         brain['y'] += xyz[1]
+        while brain['status'] == 'pause':
+            pass
+        if brain['status'] == 'dead':
+            return 0
+        end_moving()
+        new_tail()
+        chance_surprise()
 
 
 def last_tail():
@@ -130,9 +205,17 @@ def last_tail():
 
 
 def edit_tail():
-    tail = tkinter.Frame(game_cell, bg='black', width=30, height=30)
+    xyz = snake_side(brain['way'])
+    tail = tkinter.Frame(game_cell, bg=surprise['color'], width=30, height=30)
     tail.place(x=brain['x']*30, y=brain['y']*30)
     brain['tail'] += [dict(tail=tail, x=brain['x'] * 30, y=brain['y'] * 30, way=brain['way'])]
+    if surprise['color'] == 'white':
+        if brain['x'] + xyz[0] == brain['food'][0]['x'] / 30 and brain['y'] + xyz[1] == brain['food'][0]['y'] / 30:
+            o = tkinter.Frame(game_cell, width=10, height=10, bg='red')
+        else:
+            o = tkinter.Frame(game_cell, width=10, height=10, bg='aqua')
+        o.place(x=brain['tail'][len(brain['tail']) - 1]['x'] + 10, y=brain['tail'][len(brain['tail']) - 1]['y'] + 10)
+        surprise['ornament'] += [o]
 
 
 def end_game():
@@ -149,7 +232,7 @@ def game_start():
     brain['snake'].place(x=brain['x'] * 30, y=brain['y'] * 30)
     stop['text'] = '⬜'
     score['text'] = 'Score: 000'
-    throw_food()
+    brain['food'] = throw_food()
     edit_tail()
     threading.Thread(target=run_game).start()
 
@@ -162,13 +245,14 @@ def game_continuation():
     for tail in brain['tail']:
         tail['tail'] = tkinter.Frame(game_cell, bg='black', width=30, height=30)
         tail['tail'].place(x=tail['x'], y=tail['y'])
+    edit_tail()
     stop['text'] = '⬛'
-    score['text'] = 'Score: 000'
+    score['text'] = 'Score: ' + '000'[len(str(brain['l'])):] + str(brain['l'])
     end_moving()
     food = tkinter.Frame(game_cell, bg='red', width=30, height=30)
     food.place(x=brain['food'][0]['x'], y=brain['food'][0]['y'])
     brain['food'][1] = food
-    edit_tail()
+    new_tail()
     threading.Thread(target=run_game).start()
 
 
@@ -191,14 +275,22 @@ def last_data():
 
 def update_game():
     brain['status'] = 'dead'
-    time.sleep(1)
+    time.sleep(0.15)
     for tail in brain['tail']:
         tail['tail'].destroy()
     brain['snake'].destroy()
     brain['food'][1].destroy()
 
 
-def expection(value, options):
+def expection(value, options=None):
+    if value == 0:
+        surprise['food'][1].destroy()
+        surprise['food'] = None
+        if options is None:
+            fantastic_vision()
+            threading.Thread(target=lambda: timer(5, 6)).start()
+        else:
+            options = None
     if value == 1:
         update_game()
         game_continuation()
@@ -211,7 +303,26 @@ def expection(value, options):
         pass
     if value == 5:
         pass
+    if value == 6:
+        game_cell['bg'] = 'green'
+        surprise['color'] = 'black'
+        brain['snake']['bg'] = 'black'
+        for tail in brain['tail']:
+            tail['tail']['bg'] = 'black'
+        for i in surprise['ornament']:
+            i.destroy()
+        surprise['ornament'] = []
+
     option_destroy(options)
+
+
+def fantastic_vision():
+    game_cell['bg'] = 'black'
+    surprise['color'] = 'white'
+    brain['snake']['bg'] = 'white'
+
+    for tail in brain['tail']:
+        tail['tail']['bg'] = 'white'
 
 
 def end_game_options():
@@ -281,8 +392,11 @@ def game_options():
 
 
 def option_destroy(options):
-    options.place(y=500)
-    game.bind('<Escape>', lambda e: game_options())
+    if options is None:
+        pass
+    else:
+        options.place(y=500)
+        game.bind('<Escape>', lambda e: game_options())
 
 
 game = tkinter.Tk()
@@ -290,23 +404,32 @@ game.title('Snake')
 game.geometry('450x500')
 game.resizable(0, 0)
 
+global surprise
+surprise = dict(chance=[], food=None, color='black', ornament=[])
+for i in range(1, int(100 / 0.16)):
+    surprise['chance'] += [i]
+
 gamepad = tkinter.Frame(game, bg='darkgreen', height=50, width=450)
 gamepad.pack_propagate(0)
 gamepad.pack()
 
-menu = tkinter.Button(gamepad, text='☰', bg='darkgreen', borderwidth=0, activebackground='#005900',
-                      command=lambda: game_options())
-menu.config(font=('', 25))
-menu.place(x=-5, y=-5)
+open_menu = tkinter.Button(gamepad, text='☰', bg='darkgreen', borderwidth=0, activebackground='#005900',
+                           command=lambda: game_options())
+open_menu.config(font=('', 25))
+open_menu.place(x=-5, y=-5)
 
 stop = tkinter.Label(gamepad, text='⬜', bg='darkgreen')
 stop.bind('<Button-1>', lambda e: pause())
 stop.config(font=('', 25))
 stop.place(x=50, y=3)
 
+chance = tkinter.Label(gamepad, text='❧ 0.00%', bg='darkgreen')
+chance.config(font=('', 25))
+chance.place(x=100, y=3)
+
 score = tkinter.Label(gamepad, text='Score: 000', bg='darkgreen')
-score.config(font=('', 30))
-score.place(x=250, y=0)
+score.config(font=('', 25))
+score.place(x=280, y=3)
 
 game_cell = tkinter.Frame(game, bg='green', height=450, width=450)
 game_cell.pack_propagate(0)

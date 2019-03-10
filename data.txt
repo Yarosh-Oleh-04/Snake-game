@@ -1,5 +1,5 @@
 44
-7 7
-left
-390 270
-210 210 left
+9 7
+down
+270 360
+330 0 right|330 0 down|330 30 down|330 60 down|330 90 down|330 120 down|330 150 down|330 180 left|300 180 left|270 180 down
